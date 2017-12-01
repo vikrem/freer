@@ -19,6 +19,7 @@ module Eff (
   run,
   runM,
   runNat,
+  runNatS,
   handleRelay,
   handleRelayS,
   replaceRelay,
@@ -43,3 +44,12 @@ runNat
      (Member m r)
   => (forall a. e a -> m a) -> Eff (e ': r) w -> Eff r w
 runNat f = handleRelay pure (\v -> (send (f v) >>=))
+
+runNatS
+    :: Member m effs
+    => s
+    -> (forall a. s -> eff a -> m (s, a))
+    -> Eff (eff ': effs) b
+    -> Eff effs b
+runNatS s0 f =
+    handleRelayS s0 (const pure) $ \s e -> (send (f s e) >>=) . uncurry
